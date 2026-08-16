@@ -305,7 +305,22 @@ try {
     process.exit(1);
 }
 
-// 7. Cleanup temp dir
+// 7. Re-sign the app bundle (Required for Apple Silicon / M-series Macs)
+if (process.platform === 'darwin') {
+    log.info('Re-signing Antigravity.app (required for Apple Silicon / M-series Macs)...');
+    try {
+        const { execSync } = require('child_process');
+        execSync(`codesign --force --deep --sign - "${appPath}"`, { stdio: 'ignore' });
+        log.success('Successfully re-signed Antigravity.app.');
+    } catch (err) {
+        log.warn('Failed to re-sign Antigravity.app automatically.');
+        console.log(`\n${colors.yellow}If the app fails to open (crashes or shows "damaged" error on Apple Silicon),${colors.reset}`);
+        console.log(`${colors.yellow}please run the following command in your terminal to sign it manually:${colors.reset}`);
+        console.log(`👉 ${colors.cyan}sudo codesign --force --deep --sign - "${appPath}"${colors.reset}\n`);
+    }
+}
+
+// 8. Cleanup temp dir
 log.info('Cleaning up temporary files...');
 fs.rmSync(tempDir, { recursive: true, force: true });
 

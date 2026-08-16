@@ -18,8 +18,10 @@ This documentation is available in the following languages:
 ## Introduction
 This patcher modifies the local `app.asar` archive inside the Antigravity desktop application. It spoofs the browser window's timezone and locale on the frontend and injects corresponding environment variables into the Go-based language server process. This prevents the client application from throwing region-block warnings (e.g., "Sorry, this account is ineligible to use Antigravity because it is not currently available in your location").
 
+**Apple Silicon (M1/M2/M3/M4) Support:** Modifying an Electron application on Apple Silicon invalidates its signature, causing macOS to kill it on startup. This script automatically re-signs the `Antigravity.app` bundle using an ad-hoc signature at the end of the patch, making it fully compatible with both Intel and M-series Macs without launching issues.
+
 ## Requirements
-* macOS
+* macOS (Intel or Apple Silicon M-series)
 * Google Antigravity installed (in `/Applications/Antigravity.app` or `~/Applications/Antigravity.app`)
 * **Node.js is NOT required** (the installer automatically falls back to Antigravity's embedded Node.js or downloads a portable Node.js binary if needed).
 
