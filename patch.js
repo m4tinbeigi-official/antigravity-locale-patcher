@@ -1,19 +1,29 @@
+process.noAsar = true;
 const fs = require('fs');
 const path = require('path');
-const { execSync } = require('child_process');
 
-const appPath = '/Applications/Antigravity.app';
+// Support both system-wide and user-specific Applications folders
+const possibleAppPaths = [
+    '/Applications/Antigravity.app',
+    path.join(process.env.HOME || '', 'Applications/Antigravity.app')
+];
+
+let appPath = possibleAppPaths.find(p => fs.existsSync(p));
+
+console.log('--- Antigravity Auto Patch Script ---');
+
+if (!appPath) {
+    console.error('Error: Antigravity is not installed in standard locations.');
+    console.error('Looked in:');
+    possibleAppPaths.forEach(p => console.error(`  - ${p}`));
+    process.exit(1);
+}
+
+console.log(`Found Antigravity at: ${appPath}`);
 const resourcesPath = path.join(appPath, 'Contents/Resources');
 const asarPath = path.join(resourcesPath, 'app.asar');
 const backupPath = path.join(resourcesPath, 'app.asar.bak');
 const tempDir = path.join(__dirname, 'antigravity_temp_extracted');
-
-console.log('--- Antigravity Auto Patch Script ---');
-
-if (!fs.existsSync(appPath)) {
-    console.error(`Error: Antigravity is not installed at ${appPath}`);
-    process.exit(1);
-}
 
 // 1. Back up original asar
 if (!fs.existsSync(backupPath)) {
@@ -28,12 +38,109 @@ if (fs.existsSync(tempDir)) {
     fs.rmSync(tempDir, { recursive: true, force: true });
 }
 
+// Custom Pure-JS ASAR Extractor
+function extractAsar(asarFilePath, destFolderPath) {
+    const fd = fs.openSync(asarFilePath, 'r');
+    const sizeBuf = Buffer.alloc(16);
+    fs.readSync(fd, sizeBuf, 0, 16, 0);
+    const headerSize = sizeBuf.readUInt32LE(12);
+    const headerBuf = Buffer.alloc(headerSize);
+    fs.readSync(fd, headerBuf, 0, headerSize, 16);
+    const headerStr = headerBuf.toString('utf8').replace(/\0+$/, '').trim();
+    const header = JSON.parse(headerStr);
+    const payloadOffset = 16 + headerSize;
+
+    function extract(node, currentPath) {
+        if (node.files) {
+            for (const [name, info] of Object.entries(node.files)) {
+                const itemPath = path.join(currentPath, name);
+                if (info.files) {
+                    fs.mkdirSync(itemPath, { recursive: true });
+                    extract(info, itemPath);
+                } else {
+                    const fileBuf = Buffer.alloc(info.size);
+                    fs.readSync(fd, fileBuf, 0, info.size, payloadOffset + parseInt(info.offset));
+                    fs.mkdirSync(path.dirname(itemPath), { recursive: true });
+                    fs.writeFileSync(itemPath, fileBuf);
+                }
+            }
+        }
+    }
+    fs.mkdirSync(destFolderPath, { recursive: true });
+    extract(header, destFolderPath);
+    fs.closeSync(fd);
+}
+
+// Custom Pure-JS ASAR Packer
+function packAsar(srcFolderPath, destAsarFilePath) {
+    const filesList = [];
+    
+    function buildHeader(dirPath) {
+        const result = { files: {} };
+        const items = fs.readdirSync(dirPath);
+        for (const item of items) {
+            if (item === '.DS_Store') continue;
+            const fullPath = path.join(dirPath, item);
+            const stat = fs.statSync(fullPath);
+            if (stat.isDirectory()) {
+                result.files[item] = buildHeader(fullPath);
+            } else {
+                filesList.push(fullPath);
+                result.files[item] = {
+                    size: stat.size,
+                    offset: ""
+                };
+            }
+        }
+        return result;
+    }
+    
+    const header = buildHeader(srcFolderPath);
+    
+    let currentOffset = 0;
+    function updateOffsets(node) {
+        if (node.files) {
+            for (const [name, info] of Object.entries(node.files)) {
+                if (info.files) {
+                    updateOffsets(info);
+                } else {
+                    info.offset = currentOffset.toString();
+                    currentOffset += info.size;
+                }
+            }
+        }
+    }
+    updateOffsets(header);
+    
+    const headerJson = JSON.stringify(header);
+    const headerBuf = Buffer.from(headerJson, 'utf8');
+    const alignSize = (4 - (headerBuf.length % 4)) % 4;
+    const paddedHeaderBuf = Buffer.concat([headerBuf, Buffer.alloc(alignSize)]);
+    const headerSize = paddedHeaderBuf.length;
+    
+    const sizeBuf = Buffer.alloc(16);
+    sizeBuf.writeUInt32LE(4, 0);
+    sizeBuf.writeUInt32LE(headerSize + 8, 4);
+    sizeBuf.writeUInt32LE(headerSize + 4, 8);
+    sizeBuf.writeUInt32LE(headerSize, 12);
+    
+    const writeStream = fs.createWriteStream(destAsarFilePath);
+    writeStream.write(sizeBuf);
+    writeStream.write(paddedHeaderBuf);
+    
+    for (const filePath of filesList) {
+        const data = fs.readFileSync(filePath);
+        writeStream.write(data);
+    }
+    writeStream.end();
+}
+
 // 3. Extract asar
 console.log('Extracting app.asar...');
 try {
-    execSync(`npx -y asar extract "${asarPath}" "${tempDir}"`, { stdio: 'inherit' });
+    extractAsar(asarPath, tempDir);
 } catch (err) {
-    console.error('Failed to extract app.asar. Make sure npx/node is installed.', err);
+    console.error('Failed to extract app.asar programmatically:', err);
     process.exit(1);
 }
 
@@ -105,10 +212,10 @@ if (fs.existsSync(lsPath)) {
 // 6. Repack asar
 console.log('Packing app.asar back...');
 try {
-    execSync(`npx -y asar pack "${tempDir}" "${asarPath}"`, { stdio: 'inherit' });
+    packAsar(tempDir, asarPath);
     console.log('Successfully repacked app.asar.');
 } catch (err) {
-    console.error('Failed to pack app.asar.', err);
+    console.error('Failed to pack app.asar programmatically:', err);
     process.exit(1);
 }
 

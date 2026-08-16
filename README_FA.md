@@ -11,8 +11,8 @@
 
 ## پیش‌نیازها
 * سیستم‌عامل macOS
-* نصب بودن Node.js و npm (جهت استخراج و بسته‌بندی مجدد فایل ASAR)
-* نصب بودن برنامه در مسیر پیش‌فرض: `/Applications/Antigravity.app`
+* نصب بودن برنامه Antigravity (در مسیر `/Applications/Antigravity.app` یا `~/Applications/Antigravity.app`)
+* **نیاز به نصب Node.js نیست** (پچر به طور خودکار از نسخه داخلی Antigravity استفاده می‌کند یا در صورت لزوم نسخه پرتابل Node.js را خودکار دانلود و اجرا می‌کند).
 
 ## نحوه استفاده
 ۱. مخزن را کلون کنید:

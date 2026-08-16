@@ -11,8 +11,8 @@
 
 ## 系统要求
 * macOS
-* Node.js & npm（用于解压和重新打包 ASAR 归档）
-* 安装在 `/Applications/Antigravity.app` 中的 Google Antigravity
+* 安装好的 Google Antigravity（位于 `/Applications/Antigravity.app` 或 `~/Applications/Antigravity.app`）
+* **不需要预先安装 Node.js**（安装程序会自动调用 Antigravity 内置的 Node.js，或者在需要时自动下载便携版 Node.js）。
 
 ## 使用方法
 1. 克隆此仓库：

@@ -11,8 +11,8 @@ Dieser Patcher modifiziert das lokale `app.asar`-Archiv innerhalb der Antigravit
 
 ## Anforderungen
 * macOS
-* Node.js & npm (zum Entpacken und Wiederverpacken des ASAR-Archivs)
-* Google Antigravity installiert unter `/Applications/Antigravity.app`
+* Google Antigravity installiert (unter `/Applications/Antigravity.app` oder `~/Applications/Antigravity.app`)
+* **Node.js ist NICHT erforderlich** (das Installationsprogramm greift automatisch auf das integrierte Node.js von Antigravity zurück oder lädt bei Bedarf ein portables Node.js herunter).
 
 ## Verwendung
 1. Klonen Sie dieses Repository:

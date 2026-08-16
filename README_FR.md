@@ -11,8 +11,8 @@ Ce correctif modifie l'archive locale `app.asar` à l'intérieur de l'applicatio
 
 ## Configuration requise
 * macOS
-* Node.js & npm (pour désarchiver et réarchiver le fichier ASAR)
-* Google Antigravity installé dans `/Applications/Antigravity.app`
+* Google Antigravity installé (dans `/Applications/Antigravity.app` ou `~/Applications/Antigravity.app`)
+* **Node.js n'est PAS requis** (l'installateur utilise automatiquement le Node.js intégré d'Antigravity ou télécharge une version portable si nécessaire).
 
 ## Utilisation
 1. Clonez ce dépôt :

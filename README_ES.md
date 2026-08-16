@@ -11,8 +11,8 @@ Este parche modifica el archivo local `app.asar` dentro de la aplicación de esc
 
 ## Requisitos
 * macOS
-* Node.js y npm (para desempaquetar y volver a empaquetar el archivo ASAR)
-* Google Antigravity instalado en `/Applications/Antigravity.app`
+* Google Antigravity instalado (en `/Applications/Antigravity.app` o `~/Applications/Antigravity.app`)
+* **Node.js NO es requerido** (el instalador utiliza automáticamente el Node.js integrado de Antigravity o descarga una versión portable si es necesario).
 
 ## Cómo usar
 1. Clona este repositorio:

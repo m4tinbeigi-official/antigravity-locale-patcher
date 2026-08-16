@@ -11,8 +11,8 @@
 
 ## Требования
 * macOS
-* Node.js и npm (для распаковки и упаковки архива ASAR)
-* Google Antigravity, установленный в `/Applications/Antigravity.app`
+* Установленный Google Antigravity (в `/Applications/Antigravity.app` или `~/Applications/Antigravity.app`)
+* **Node.js НЕ требуется** (установщик автоматически использует встроенный Node.js из Antigravity или скачивает портативную версию при необходимости).
 
 ## Инструкция по использованию
 1. Клонируйте репозиторий:
