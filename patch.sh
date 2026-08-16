@@ -30,11 +30,26 @@ if [ ! -f "$SCRIPT_DIR/patch.js" ]; then
     fi
 fi
 
+# Determine target resources path and check if we have write permission
+TARGET_RESOURCES=""
+if [ -d "/Applications/Antigravity.app" ]; then
+    TARGET_RESOURCES="/Applications/Antigravity.app/Contents/Resources"
+elif [ -d "$HOME/Applications/Antigravity.app" ]; then
+    TARGET_RESOURCES="$HOME/Applications/Antigravity.app/Contents/Resources"
+fi
+
+SUDO_PREFIX=""
+if [ -n "$TARGET_RESOURCES" ] && [ ! -w "$TARGET_RESOURCES" ]; then
+    echo "Administrative privileges (sudo) are required to patch the application."
+    echo "Please enter your macOS password when prompted."
+    SUDO_PREFIX="sudo"
+fi
+
 # Function to perform cleanups on exit
 cleanup() {
     if [ "$CLEANUP_TEMP" = true ] && [ -d "$SCRIPT_DIR" ]; then
         echo "Cleaning up temporary workspace..."
-        rm -rf "$SCRIPT_DIR"
+        $SUDO_PREFIX rm -rf "$SCRIPT_DIR"
     fi
 }
 trap cleanup EXIT
@@ -42,7 +57,7 @@ trap cleanup EXIT
 # Check if node is installed globally
 if command -v node >/dev/null 2>&1; then
     echo "Using global Node.js to run the patch..."
-    node "$SCRIPT_DIR/patch.js"
+    $SUDO_PREFIX node "$SCRIPT_DIR/patch.js"
     EXIT_CODE=$?
     exit $EXIT_CODE
 fi
@@ -60,7 +75,7 @@ fi
 
 if [ -n "$EMBEDDED_NODE" ]; then
     echo "Global Node.js not found. Using Antigravity's embedded Node.js..."
-    ELECTRON_RUN_AS_NODE=1 "$EMBEDDED_NODE" "$SCRIPT_DIR/patch.js"
+    $SUDO_PREFIX env ELECTRON_RUN_AS_NODE=1 "$EMBEDDED_NODE" "$SCRIPT_DIR/patch.js"
     EXIT_CODE=$?
     exit $EXIT_CODE
 fi
@@ -110,7 +125,7 @@ fi
 
 if [ -f "$NODE_DIR/bin/node" ]; then
     echo "Successfully downloaded portable Node.js. Running the patch..."
-    "$NODE_DIR/bin/node" "$SCRIPT_DIR/patch.js"
+    $SUDO_PREFIX "$NODE_DIR/bin/node" "$SCRIPT_DIR/patch.js"
     EXIT_CODE=$?
     exit $EXIT_CODE
 else
