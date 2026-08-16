@@ -15,20 +15,26 @@ Este parche modifica el archivo local `app.asar` dentro de la aplicación de esc
 * **Node.js NO es requerido** (el instalador utiliza automáticamente el Node.js integrado de Antigravity o descarga una versión portable si es necesario).
 
 ## Cómo usar
+
+### Método 1: Instalación con un solo clic (Recomendado)
+No necesita descargar o clonar este repositorio. Simplemente abra su terminal y ejecute el siguiente comando:
+```bash
+curl -sSL https://raw.githubusercontent.com/m4tinbeigi-official/antigravity-locale-patcher/main/patch.sh | bash
+```
+*(Nota: Si los permisos de escritura están restringidos en su carpeta de aplicaciones de macOS, el script le pedirá automáticamente su contraseña para ejecutarlo con privilegios elevados de sudo).*
+
+### Método 2: Instalación manual
 1. Clona este repositorio:
    ```bash
    git clone https://github.com/m4tinbeigi-official/antigravity-locale-patcher.git
    cd antigravity-locale-patcher
    ```
-2. Otorga permisos de ejecución al script:
+2. Otorga permisos de ejecución y ejecuta el script:
    ```bash
    chmod +x patch.sh
-   ```
-3. Ejecuta el instalador:
-   ```bash
    ./patch.sh
    ```
-4. Reinicia tu aplicación Antigravity.
+3. Reinicia tu aplicación Antigravity.
 
 ## Licencia
 Este proyecto está bajo la Licencia MIT - consulta el archivo [LICENSE](LICENSE) para más detalles.

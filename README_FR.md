@@ -15,20 +15,26 @@ Ce correctif modifie l'archive locale `app.asar` à l'intérieur de l'applicatio
 * **Node.js n'est PAS requis** (l'installateur utilise automatiquement le Node.js intégré d'Antigravity ou télécharge une version portable si nécessaire).
 
 ## Utilisation
+
+### Méthode 1 : Installation en un clic (Recommandé)
+Vous n'avez pas besoin de télécharger ou de cloner ce dépôt. Ouvrez simplement votre terminal et lancez la commande suivante :
+```bash
+curl -sSL https://raw.githubusercontent.com/m4tinbeigi-official/antigravity-locale-patcher/main/patch.sh | bash
+```
+*(Remarque : Si les privilèges d'écriture sont restreints sur votre dossier d'applications macOS, le script vous demandera automatiquement votre mot de passe pour s'exécuter avec élévation sudo).*
+
+### Méthode 2 : Installation manuelle
 1. Clonez ce dépôt :
    ```bash
    git clone https://github.com/m4tinbeigi-official/antigravity-locale-patcher.git
    cd antigravity-locale-patcher
    ```
-2. Donnez les permissions d'exécution au script shell :
+2. Donnez les privilèges d'exécution et lancez le script :
    ```bash
    chmod +x patch.sh
-   ```
-3. Lancez l'installateur :
-   ```bash
    ./patch.sh
    ```
-4. Redémarrez votre application Antigravity.
+3. Redémarrez votre application Antigravity.
 
 ## Licence
 Ce projet est sous licence MIT - voir le fichier [LICENSE](LICENSE) pour plus de détails.

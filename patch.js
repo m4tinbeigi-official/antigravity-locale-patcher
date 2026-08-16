@@ -2,6 +2,57 @@ process.noAsar = true;
 const fs = require('fs');
 const path = require('path');
 
+const colors = {
+    red: '\x1b[1;31m',
+    green: '\x1b[1;32m',
+    yellow: '\x1b[1;33m',
+    cyan: '\x1b[1;36m',
+    reset: '\x1b[0m'
+};
+
+const log = {
+    info: (msg) => console.log(`${colors.cyan}🔍 ${msg}${colors.reset}`),
+    success: (msg) => console.log(`${colors.green}✨ ${msg}${colors.reset}`),
+    warn: (msg) => console.log(`${colors.yellow}⚠️ ${msg}${colors.reset}`),
+    error: (msg) => console.error(`${colors.red}❌ ${msg}${colors.reset}`)
+};
+
+function printErrorBox(title, message, details) {
+    console.error(`\n${colors.red}┌────────────────────────────────────────────────────────┐${colors.reset}`);
+    console.error(`${colors.red}│ ❌ ${title.padEnd(50)} │${colors.reset}`);
+    console.error(`${colors.red}├────────────────────────────────────────────────────────┤${colors.reset}`);
+    const wrappedMsg = wrapText(message, 52);
+    wrappedMsg.forEach(line => {
+        console.error(`${colors.red}│ ${line.padEnd(52)} │${colors.reset}`);
+    });
+    if (details) {
+        console.error(`${colors.red}│                                                        │${colors.reset}`);
+        const wrappedDetails = wrapText(`Details: ${details}`, 52);
+        wrappedDetails.forEach(line => {
+            console.error(`${colors.red}│ ${colors.yellow}${line.padEnd(52)}${colors.red} │${colors.reset}`);
+        });
+    }
+    console.error(`${colors.red}└────────────────────────────────────────────────────────┘\n${colors.reset}`);
+}
+
+function wrapText(str, width) {
+    const lines = [];
+    const paragraphs = str.split('\n');
+    paragraphs.forEach(para => {
+        let currentLine = '';
+        para.split(' ').forEach(word => {
+            if ((currentLine + word).length < width) {
+                currentLine += (currentLine ? ' ' : '') + word;
+            } else {
+                lines.push(currentLine);
+                currentLine = word;
+            }
+        });
+        if (currentLine) lines.push(currentLine);
+    });
+    return lines;
+}
+
 // Support both system-wide and user-specific Applications folders
 const possibleAppPaths = [
     '/Applications/Antigravity.app',
@@ -10,16 +61,20 @@ const possibleAppPaths = [
 
 let appPath = possibleAppPaths.find(p => fs.existsSync(p));
 
-console.log('--- Antigravity Auto Patch Script ---');
+console.log(`\n${colors.cyan}══════════════════════════════════════════════════════════${colors.reset}`);
+console.log(`${colors.cyan}         Antigravity Auto Locale & Region Patcher         ${colors.reset}`);
+console.log(`${colors.cyan}══════════════════════════════════════════════════════════${colors.reset}\n`);
 
 if (!appPath) {
-    console.error('Error: Antigravity is not installed in standard locations.');
-    console.error('Looked in:');
-    possibleAppPaths.forEach(p => console.error(`  - ${p}`));
+    printErrorBox(
+        'Antigravity App Not Found',
+        'Google Antigravity is not installed in standard locations on this system.',
+        'Checked folders:\n- /Applications/Antigravity.app\n- ~/Applications/Antigravity.app\n\nPlease make sure the application is installed.'
+    );
     process.exit(1);
 }
 
-console.log(`Found Antigravity at: ${appPath}`);
+log.info(`Found Antigravity at: ${appPath}`);
 const resourcesPath = path.join(appPath, 'Contents/Resources');
 const asarPath = path.join(resourcesPath, 'app.asar');
 const backupPath = path.join(resourcesPath, 'app.asar.bak');
@@ -27,10 +82,20 @@ const tempDir = path.join(__dirname, 'antigravity_temp_extracted');
 
 // 1. Back up original asar
 if (!fs.existsSync(backupPath)) {
-    console.log('Creating backup of app.asar...');
-    fs.copyFileSync(asarPath, backupPath);
+    log.info('Creating backup of app.asar...');
+    try {
+        fs.copyFileSync(asarPath, backupPath);
+        log.success('Backup created successfully.');
+    } catch (err) {
+        printErrorBox(
+            'Backup Creation Failed',
+            'Could not create a backup copy of app.asar.',
+            err.message
+        );
+        process.exit(1);
+    }
 } else {
-    console.log('Backup already exists.');
+    log.info('Backup already exists.');
 }
 
 // 2. Clean up old temp dir if exists
@@ -136,18 +201,23 @@ function packAsar(srcFolderPath, destAsarFilePath) {
 }
 
 // 3. Extract asar
-console.log('Extracting app.asar...');
+log.info('Extracting app.asar...');
 try {
     extractAsar(asarPath, tempDir);
+    log.success('Extraction complete.');
 } catch (err) {
-    console.error('Failed to extract app.asar programmatically:', err);
+    printErrorBox(
+        'ASAR Extraction Failed',
+        'Could not programmatically unpack app.asar.',
+        err.message
+    );
     process.exit(1);
 }
 
 // 4. Modify preload.js
 const preloadPath = path.join(tempDir, 'dist/preload.js');
 if (fs.existsSync(preloadPath)) {
-    console.log('Patching preload.js...');
+    log.info('Patching preload.js...');
     let content = fs.readFileSync(preloadPath, 'utf8');
     
     const spoofCode = `
@@ -176,19 +246,23 @@ try {
     if (!content.includes('Spoof Timezone and Locale')) {
         content = content.replace('"use strict";', `"use strict";\n${spoofCode}`);
         fs.writeFileSync(preloadPath, content, 'utf8');
-        console.log('preload.js patched successfully.');
+        log.success('preload.js patched successfully.');
     } else {
-        console.log('preload.js is already patched.');
+        log.info('preload.js is already patched.');
     }
 } else {
-    console.error('Error: preload.js not found.');
+    printErrorBox(
+        'Preload Script Not Found',
+        'Could not locate dist/preload.js within the unpacked application archive.',
+        'This version of Antigravity might have a different file structure.'
+    );
     process.exit(1);
 }
 
 // 5. Modify languageServer.js
 const lsPath = path.join(tempDir, 'dist/languageServer.js');
 if (fs.existsSync(lsPath)) {
-    console.log('Patching languageServer.js...');
+    log.info('Patching languageServer.js...');
     let content = fs.readFileSync(lsPath, 'utf8');
     
     const target = `const env = { ...process.env, ...(0, shell_env_1.shellEnvSync)() };`;
@@ -197,31 +271,45 @@ if (fs.existsSync(lsPath)) {
     if (content.includes(target)) {
         content = content.replace(target, replacement);
         fs.writeFileSync(lsPath, content, 'utf8');
-        console.log('languageServer.js patched successfully.');
+        log.success('languageServer.js patched successfully.');
     } else if (content.includes('TZ: \'America/New_York\'')) {
-        console.log('languageServer.js is already patched.');
+        log.info('languageServer.js is already patched.');
     } else {
-        console.error('Error: Could not find target environment creation line in languageServer.js.');
+        printErrorBox(
+            'Language Server Patch Failed',
+            'Could not find target environment creation line in languageServer.js.',
+            'This version of Antigravity might be different or already altered.'
+        );
         process.exit(1);
     }
 } else {
-    console.error('Error: languageServer.js not found.');
+    printErrorBox(
+        'Language Server Script Not Found',
+        'Could not locate dist/languageServer.js within the unpacked application archive.',
+        'This version of Antigravity might have a different file structure.'
+    );
     process.exit(1);
 }
 
 // 6. Repack asar
-console.log('Packing app.asar back...');
+log.info('Packing app.asar back...');
 try {
     packAsar(tempDir, asarPath);
-    console.log('Successfully repacked app.asar.');
+    log.success('Successfully repacked app.asar.');
 } catch (err) {
-    console.error('Failed to pack app.asar programmatically:', err);
+    printErrorBox(
+        'ASAR Packing Failed',
+        'Could not pack the modified directory back to app.asar.',
+        err.message
+    );
     process.exit(1);
 }
 
 // 7. Cleanup temp dir
-console.log('Cleaning up temporary files...');
+log.info('Cleaning up temporary files...');
 fs.rmSync(tempDir, { recursive: true, force: true });
 
-console.log('\n--- Patch Completed Successfully! ---');
-console.log('Please restart Antigravity.');
+console.log(`\n${colors.green}══════════════════════════════════════════════════════════${colors.reset}`);
+console.log(`${colors.green}           ✨ Patch Completed Successfully! ✨           ${colors.reset}`);
+console.log(`${colors.green}══════════════════════════════════════════════════════════${colors.reset}\n`);
+log.info('Please restart Google Antigravity to apply the changes.');

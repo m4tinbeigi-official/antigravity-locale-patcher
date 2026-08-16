@@ -24,20 +24,26 @@ This patcher modifies the local `app.asar` archive inside the Antigravity deskto
 * **Node.js is NOT required** (the installer automatically falls back to Antigravity's embedded Node.js or downloads a portable Node.js binary if needed).
 
 ## How to Use
+
+### Method 1: One-Click Installation (Recommended)
+You don't need to download or clone this repository. Simply open your terminal and run the following command:
+```bash
+curl -sSL https://raw.githubusercontent.com/m4tinbeigi-official/antigravity-locale-patcher/main/patch.sh | bash
+```
+*(Note: If write permissions are restricted on your macOS Applications folder, the script will automatically prompt you for your password to elevate privileges).*
+
+### Method 2: Manual Installation
 1. Clone this repository:
    ```bash
    git clone https://github.com/m4tinbeigi-official/antigravity-locale-patcher.git
    cd antigravity-locale-patcher
    ```
-2. Grant execution permission to the shell script:
+2. Grant execution permission and run the script:
    ```bash
    chmod +x patch.sh
-   ```
-3. Run the installer:
-   ```bash
    ./patch.sh
    ```
-4. Restart your Antigravity application.
+3. Restart your Antigravity application.
 
 ## License
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
